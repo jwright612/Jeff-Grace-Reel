@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Playlist</title>
+  <style>
+    :root{
+      --bg: #000000;
+      --text: #D9CDC2;
+      --red: #8B0106;
+      --gold: #D89900;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      padding: 24px;
+      max-width: 720px;
+      margin: 0 auto;
+      background: var(--bg);
+      color: var(--text);
+      position: relative;
+      z-index: 0;
+    }
+
+    /* Background image layer (30% opacity) */
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background-image: url("assets/ShowLogo.png");
+      background-repeat: no-repeat;
+      background-position: center 12%;
+      background-size: contain;
+      opacity: 0.30;
+      z-index: -1;
+      pointer-events: none;
+    }
+
+    h2 {
+      margin: 0 0 12px 0;
+      letter-spacing: 0.5px;
+      color: var(--red);
+      text-transform: uppercase;
+    }
+
+    .card {
+      background: rgba(0,0,0,0.55);
+      border: 1px solid rgba(217,205,194,0.18);
+      border-radius: 14px;
+      padding: 14px;
+      backdrop-filter: blur(2px);
+    }
+
+    audio { width: 100%; }
+
+    .controls {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+
+    button {
+      padding: 8px 10px;
+      border-radius: 10px;
+      border: 1px solid rgba(217,205,194,0.25);
+      background: rgba(0,0,0,0.35);
+      color: var(--text);
+      cursor: pointer;
+    }
+    button:hover { background: rgba(139,1,6,0.15); }
+
+    .hint {
+      opacity: 0.75;
+      font-size: 14px;
+      margin-top: 8px;
+    }
+
+    .list {
+      margin-top: 14px;
+      border-top: 1px solid rgba(217,205,194,0.18);
+    }
+
+    .track {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 6px;
+      border-bottom: 1px solid rgba(217,205,194,0.18);
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .track:hover {
+      background: rgba(139,1,6,0.12);
+    }
+
+    .track.now {
+      font-weight: 700;
+      background: rgba(0,0,0,0.20);
+    }
+
+    .num {
+      width: 2.7em;
+      opacity: 0.7;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .title { flex: 1; }
+
+    .nowBadge {
+      font-size: 12px;
+      color: var(--gold);
+      border: 1px solid rgba(216,153,0,0.35);
+      padding: 2px 8px;
+      border-radius: 999px;
+      letter-spacing: 0.3px;
+    }
+
+    .topline {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .nowPlaying {
+      font-size: 14px;
+      opacity: 0.9;
+    }
+    .nowPlaying strong { color: var(--gold); }
+  </style>
+</head>
+<body>
+
+<div class="topline">
+  <h2>Playlist</h2>
+  <div class="nowBadge" id="badge">READY</div>
+</div>
+
+<div class="card">
+  <audio id="player" controls preload="metadata"></audio>
+
+  <div class="controls">
+    <button id="restart">Restart playlist</button>
+  </div>
+
+  <div class="nowPlaying" id="nowPlaying">Now playing: <strong>—</strong></div>
+  <div class="hint">Tip: click any track below to jump to it.</div>
+
+  <div id="list" class="list"></div>
+</div>
+
+<script>
+const tracks = [
+  { title: "01 Teardrop Demo", file: "audio/01 Teardrop Demo.mp3" },
+  { title: "02 Teardrop Demo", file: "audio/02 Teardrop Demo.mp3" },
+  { title: "03 Teardrop Demo", file: "audio/03 Teardrop Demo.mp3" },
+  { title: "04 Goodbye Belle - Stake Land", file: "audio/04 Goodbye Belle - Stake Land.mp3" },
+  { title: "05 The Beast - Sweet Tooth", file: "audio/05 The Beast - Sweet Tooth.mp3" },
+  { title: "06 Sweet Tooth - Sweet Tooth", file: "audio/06 Sweet Tooth - Sweet Tooth.mp3" },
+  { title: "07 Footprints - The Last Winter", file: "audio/07 Footprints - The Last Winter.mp3" },
+  { title: "08 Rya Disappears - In the Shadow of the Moon", file: "audio/08 Rya Disappears - In the Shadow of the Moon.mp3" },
+  { title: "09 He's in the House - Cold In July", file: "audio/09 He's in the House - Cold In July.mp3" },
+  { title: "10 Bon Fire - Sweet Tooth", file: "audio/10 Bon Fire - Sweet Tooth.mp3" },
+  { title: "11 Motorcycle Chase - In The Shadow of the Moon", file: "audio/11 Motorcycle Chase - In The Shadow of the Moon.mp3" },
+  { title: "12 With Love I Do This - We Are What We Are", file: "audio/12 With Love I Do This - We Are What We Are.mp3" },
+  { title: "13 Time Turns Back - In the Shadow of the Moon", file: "audio/13 Time Turns Back - In the Shadow of the Moon.mp3" },
+  { title: "14 Official Protection - Cold in July", file: "audio/14 Official Protection - Cold in July.mp3" },
+  { title: "15 Surrounded - Sweet Tooth", file: "audio/15 Surrounded - Sweet Tooth.mp3" },
+  { title: "16 Preparing the Body - We Are What We Are", file: "audio/16 Preparing the Body - We Are What We Are.mp3" },
+  { title: "17 Main Title - Stake Land", file: "audio/17 Main Title - Stake Land.mp3" }
+];
+
+let index = 0;
+const player = document.getElementById("player");
+const list = document.getElementById("list");
+const restartBtn = document.getElementById("restart");
+const nowPlaying = document.getElementById("nowPlaying");
+const badge = document.getElementById("badge");
+
+function renderList() {
+  list.innerHTML = "";
+  tracks.forEach((t, i) => {
+    const row = document.createElement("div");
+    row.className = "track" + (i === index ? " now" : "");
+    row.innerHTML = `
+      <div class="num">${String(i + 1).padStart(2, "0")}</div>
+      <div class="title">${t.title}</div>
+    `;
+    row.addEventListener("click", () => load(i, true));
+    list.appendChild(row);
+  });
+}
+
+function setNowPlaying() {
+  const title = tracks[index]?.title ?? "—";
+  nowPlaying.innerHTML = `Now playing: <strong>${title}</strong>`;
+  badge.textContent = player.paused ? "PAUSED" : "PLAYING";
+}
+
+function load(i, shouldPlay = false) {
+  index = i;
+  player.src = tracks[index].file;
+  renderList();
+  setNowPlaying();
+  if (shouldPlay) player.play();
+}
+
+player.addEventListener("ended", () => {
+  if (index + 1 < tracks.length) {
+    load(index + 1, true);
+  } else {
+    badge.textContent = "DONE";
+  }
+});
+
+player.addEventListener("play", setNowPlaying);
+player.addEventListener("pause", setNowPlaying);
+
+restartBtn.addEventListener("click", () => load(0, true));
+
+load(0, false);
+</script>
+
+</body>
+</html>
